@@ -30,6 +30,7 @@ DEFAULT_SESSION = "zhihu-answers"
 JS_TEMPLATE = r"""
 (async () => {
   const qid = '%s';
+  const SORT = '%s';
   const START = %d;
   const W = %d;
   const LIMIT = %d;
@@ -47,7 +48,7 @@ JS_TEMPLATE = r"""
   const mapA = (a) => ({id: a.id, author: a.author ? a.author.name : '', vote: a.voteup_count, comments: a.comment_count, created: a.created_time, updated: a.updated_time, truncated: a.content_need_truncated, collapsed: a.is_collapsed, text: strip(a.content),
     thanks: a.thanks_count, favorite: a.favorite_count, ip: a.ip_info, copyable: a.is_copyable,
     author_headline: a.author ? a.author.headline : '', author_gender: a.author ? a.author.gender : '', author_url_token: a.author ? a.author.url_token : '', author_id: a.author ? a.author.id : ''});
-  const url = (o) => 'https://www.zhihu.com/api/v4/questions/' + qid + '/answers?include=' + include + '&limit=' + LIMIT + '&offset=' + o + '&platform=desktop&sort_by=default';
+  const url = (o) => 'https://www.zhihu.com/api/v4/questions/' + qid + '/answers?include=' + include + '&limit=' + LIMIT + '&offset=' + o + '&platform=desktop&sort_by=' + SORT;
   const offs = []; for (let i = 0; i < W; i++) offs.push(START + i * LIMIT);
   const pages = await Promise.all(offs.map(o => fetch(url(o), {credentials: 'include'}).then(r => r.json())));
   return JSON.stringify(pages.map(j => ({isEnd: j.paging ? j.paging.is_end : null, answers: (j.data || []).map(mapA)})));
@@ -83,6 +84,7 @@ def main():
     ap.add_argument("--session", default=DEFAULT_SESSION)
     ap.add_argument("--base", default=DEFAULT_BASE)
     ap.add_argument("--limit", type=int, default=10, help="每页条数（默认10）")
+    ap.add_argument("--sort", default="default", choices=["default", "created"], help="created=严格按创建时间倒序，适合增量刷新某题新回答")
     ap.add_argument("--concurrency", type=int, default=5, help="一次evaluate内并发拉的页数(1-10)，1=串行")
     args = ap.parse_args()
 
@@ -92,7 +94,7 @@ def main():
     all_answers = []
     start = 0
     while True:
-        code = JS_TEMPLATE % (qid, start, W, limit)
+        code = JS_TEMPLATE % (qid, args.sort, start, W, limit)
         try:
             pages = run_js(args.base, args.session, code)
         except Exception as e:

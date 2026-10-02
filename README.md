@@ -1,6 +1,6 @@
 # zhihu-webbridge-research
 
-知乎调研采集 —— 用 **Kimi WebBridge 驱动真实浏览器（复用登录态）**，在页面内**同源 `fetch` 调知乎官方 JSON API**（无签名），采集：搜索相关问题、问题下全部回答、回答评论（含楼中楼）、收藏夹（SQLite 持久化 + 增量）、单条回答/文章/想法、热榜；并本地做主题聚类报告。
+知乎调研采集 —— 用 **Kimi WebBridge 驱动真实浏览器（复用登录态）**，在页面内**同源 `fetch` 调知乎官方 JSON API**（无签名），采集：搜索相关问题、问题下全部回答、回答评论（含楼中楼）、收藏夹（SQLite 持久化 + 增量）、单条回答/文章/想法、热榜、首页推荐流、按作者作品、问题上下文（相关问题/关注人数/热搜）；另有可选写操作（赞同/喜欢/收藏/评论/草稿/发布回答/关注问题，默认 dry-run 且逐次授权）。
 
 > 面向个人研究/学习。非官方，依赖接口结构，改版可能失效。
 
@@ -17,13 +17,16 @@
 ## 能力（scripts，各自可独立跑）
 | 脚本 | 作用 |
 |---|---|
-| `search_zhihu.py` | 关键词搜索→问题/话题/文章清单（含 answer_count） |
+| `search_zhihu.py` | 关键词搜索→问题/话题/文章/用户清单（含 answer_count、联想词；`--mode users` 按作者实体） |
 | `fetch_zhihu_answers.py` | 某问题全部回答（分页到 is_end，含富字段 IP/感谢/作者身份，`--concurrency` 页内并发） |
 | `fetch_zhihu_comments.py` | 某回答评论含楼中楼（`root_comments`，`--order`、`--concurrency`） |
 | `fetch_zhihu_content.py` | 单条 回答/文章/想法全文 |
+| `fetch_zhihu_member_works.py` | 按作者采集其全部 回答/文章/想法/提问 |
+| `fetch_zhihu_question_context.py` | 问题的相关问题/关注人数/关联热搜（`--with-voters` 赞同者） |
+| `fetch_zhihu_feed.py` | 首页推荐流分页采集 |
 | `fetch_zhihu_collections.py` | 收藏夹列表/条目 → SQLite 持久化 + 增量（含 thanks_count） |
 | `fetch_zhihu_hotlist.py` | 热榜（全站/分类） |
-| `analyze_collections.py` / `gen_answers_report.py` / `research_register.py` | 主题聚类报告 / 调研报告生成 / 成果归档 |
+| `zhihu_write_ops.py` | 可选写操作：赞同/喜欢/收藏/评论及各自撤销、草稿保存读取删除、发布/删除回答、关注问题；**默认 dry-run 且逐次 `--yes` 授权** |
 
 ## 目录
 ```

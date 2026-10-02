@@ -60,6 +60,15 @@ JS_TEMPLATE = r"""
 """
 
 
+SUGGEST_JS = r"""
+(async () => {
+  const kw = '%s';
+  const j = await (await fetch('https://www.zhihu.com/api/v4/search/suggest?q=' + encodeURIComponent(kw), {credentials: 'include'})).json();
+  return JSON.stringify((j.suggest || []).map(s => s.query).filter(Boolean));
+})()
+"""
+
+
 def run_js(base, session, code, timeout=120):
     body = json.dumps({"action": "evaluate", "args": {"code": code}, "session": session}).encode("utf-8")
     req = urllib.request.Request(base, data=body, headers={"Content-Type": "application/json"})
@@ -78,7 +87,8 @@ def js_escape(s):
 def main():
     ap = argparse.ArgumentParser(description="知乎搜索并提取相关问题清单")
     ap.add_argument("--query", required=True, help="搜索关键词")
-    ap.add_argument("--type", default="general", choices=["general", "question", "topic", "answer", "article"], help="搜索类型（默认 general 混合）")
+    ap.add_argument("--type", default="general", choices=["general", "question", "topic", "answer", "article", "people", "zazhis", "place"], help="搜索类型（默认 general 混合；people/zazhis/place 实测可用）")
+    ap.add_argument("--suggest", action="store_true", help="只取搜索联想词（/api/v4/search/suggest），不翻页")
     ap.add_argument("--out", required=True, help="输出 JSON 路径")
     ap.add_argument("--pages", type=int, default=3, help="最多翻几页（默认3）")
     ap.add_argument("--session", default=DEFAULT_SESSION)
@@ -87,6 +97,19 @@ def main():
     args = ap.parse_args()
 
     limit = min(max(args.limit, 1), 20)
+
+    if args.suggest:
+        code = SUGGEST_JS % js_escape(args.query)
+        sug = run_js(args.base, args.session, code)
+        result = {"stats": {"query": args.query, "mode": "suggest", "suggestions": len(sug)}, "suggestions": sug}
+        with open(args.out, "w", encoding="utf-8") as f:
+            json.dump(result, f, ensure_ascii=False, indent=1)
+        print("STATS: 联想词 %d" % len(sug))
+        for s in sug[:10]:
+            print("  - %s" % s)
+        print("saved -> %s" % args.out)
+        return
+
     items_all = []
     is_end = None
     for page in range(args.pages):

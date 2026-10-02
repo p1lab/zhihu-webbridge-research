@@ -18,9 +18,9 @@
 
 用法：
   python fetch_zhihu_collections.py list [--out collections.json]
-  python fetch_zhihu_collections.py fetch --collection YOUR_COLLECTION_ID --db zhihu_collections.db [--full] [--keep-html]
+  python fetch_zhihu_collections.py fetch --collection 911247604 --db zhihu_collections.db [--full] [--keep-html]
   python fetch_zhihu_collections.py fetch --all --db zhihu_collections.db [--export-json ./export]
-  python fetch_zhihu_collections.py fetch --collection YOUR_COLLECTION_ID --export-json ./export --limit 20
+  python fetch_zhihu_collections.py fetch --collection 911247604 --export-json ./export --limit 20
 
 前置条件：
   1. Kimi WebBridge 守护进程已启动（127.0.0.1:10086）。
